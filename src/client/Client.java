@@ -1,5 +1,4 @@
 package client;
-
 import java.io.*;
 import java.net.InetAddress;
 import java.net.Socket;
@@ -10,6 +9,8 @@ import java.net.Socket;
 public class Client {
     private final InetAddress host;
     private final int port;
+    private ObjectInputStream  reader;
+    private ObjectOutputStream writer;
 
     public Client(InetAddress host, int port) {
         this.host = host;
@@ -17,23 +18,29 @@ public class Client {
     }
 
     public void start(){
-        try(Socket socket = new Socket(host, port)){
 
-            ObjectInputStream  reader = new ObjectInputStream(socket.getInputStream());
-            ObjectOutputStream writer = new ObjectOutputStream(socket.getOutputStream());
+        try{
+            Socket socket = new Socket("localhost", port);
 
-            writer.writeUTF(socket.getLocalSocketAddress()+ ": Соединение установлено");
-            System.out.println(reader.readUTF());
+            System.out.printf("%d/is Connected%n", socket.getPort());
+            writer = new ObjectOutputStream(socket.getOutputStream());
+            reader = new ObjectInputStream(socket.getInputStream());
+            System.out.println("Введите команду: (1 или 2)");
+            while (true) serviceStart();
 
-            serviceStart();
-
-        }catch (IOException ignore){
-
+        }catch (IOException e){
+            System.exit(1);
+        } catch (ClassNotFoundException e) {
+            System.exit(2);
         }
 
     }
 
-    private void serviceStart(){
-        System.out.println("Введите ");
+    private void serviceStart() throws IOException, ClassNotFoundException {
+            BufferedReader keyboard = new BufferedReader(new InputStreamReader(System.in));
+            writer.writeUTF(keyboard.readLine());
+            writer.flush();
+            System.out.println("Ответ с сервера: " + reader.readObject());
+       }
+
     }
-}
